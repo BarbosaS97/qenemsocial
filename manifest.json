@@ -1,0 +1,17 @@
+{
+  "name": "QEnemSocial",
+  "short_name": "QEnemSocial",
+  "description": "Plataforma gratuita de preparação para o ENEM, com mais de 2.500 questões reais e o assistente Pepito.",
+  "start_url": "/estudar.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FA",
+  "theme_color": "#2E1065",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "/images/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/images/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/images/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/images/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

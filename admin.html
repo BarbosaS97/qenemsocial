@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QEnemSocial · Admin</title>
+  <!-- noindex: mantém a página fora de buscadores. Não coloque /admin.html
+       no robots.txt — isso divulgaria publicamente o caminho "secreto". -->
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/png" href="/images/favicon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="admin-body">
+  <main class="admin-panel">
+    <div id="admin-gate" class="admin-card">
+      <h1>Painel admin</h1>
+      <p class="admin-hint">
+        Esta página não tem nenhum link no site. Acesso só com a chave de administrador
+        (configurada como secret na Edge Function).
+      </p>
+
+      <form id="admin-key-form">
+        <label for="admin-key-input">Chave de administrador</label>
+        <input id="admin-key-input" type="password" autocomplete="off" required />
+        <button type="submit" class="btn btn-primary">Entrar</button>
+      </form>
+
+      <p id="admin-error" class="admin-error hidden">Acesso negado.</p>
+    </div>
+
+    <div id="admin-content" class="admin-card hidden">
+      <h1>Importar questões do ENEM</h1>
+      <p class="admin-hint">
+        Busca provas na API enem.dev (enunciado, alternativas e imagens) e grava no cache do
+        Supabase. A API tem limite de requisições — se parar no meio por causa disso, o ano
+        exato para retomar já vem preenchido abaixo, é só clicar de novo.
+      </p>
+
+      <div class="admin-year-range">
+        <div class="admin-year-field">
+          <label for="from-year-input">De</label>
+          <input id="from-year-input" type="number" min="2009" max="2023" value="2009" />
+        </div>
+        <div class="admin-year-field">
+          <label for="to-year-input">Até</label>
+          <input id="to-year-input" type="number" min="2009" max="2023" value="2023" />
+        </div>
+      </div>
+
+      <button id="import-btn" class="btn btn-primary">📥 Exportar Questões da API</button>
+
+      <p id="import-status" class="admin-status"></p>
+      <pre id="import-log" class="admin-log" aria-live="polite"></pre>
+    </div>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
