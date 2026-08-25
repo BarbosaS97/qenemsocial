@@ -27,7 +27,6 @@ const App = (() => {
     el.yearSelect = document.getElementById("year-select");
     el.disciplineSelect = document.getElementById("discipline-select");
     el.loadBtn = document.getElementById("load-btn");
-    el.simuladoBtn = document.getElementById("simulado-btn");
     el.resetStatsBtn = document.getElementById("reset-stats-btn");
 
     el.statusArea = document.getElementById("status-area");
@@ -151,37 +150,6 @@ const App = (() => {
 
       if (!questions || questions.length === 0) {
         setStatus("Nenhuma questão encontrada para esse filtro.", true);
-        return;
-      }
-
-      state.questions = questions;
-      state.currentIndex = 0;
-      state.answers = {};
-      setStatus("");
-      showView("question");
-      renderQuestion();
-    } catch (err) {
-      setStatus(`Erro: ${err.message}`, true);
-    }
-  }
-
-  async function startSimulado() {
-    state.mode = "simulado";
-    state.filters.year = el.yearSelect.value;
-    state.filters.discipline = el.disciplineSelect.value;
-
-    setStatus("Montando simulado...");
-    showView(null);
-
-    try {
-      const { questions } = await Questions.fetchRandom({
-        year: state.filters.year,
-        discipline: state.filters.discipline,
-        limit: 10,
-      });
-
-      if (!questions || questions.length === 0) {
-        setStatus("Não foi possível montar o simulado com esse filtro.", true);
         return;
       }
 
@@ -488,7 +456,6 @@ const App = (() => {
 
   function bindEvents() {
     el.loadBtn.addEventListener("click", loadPractice);
-    el.simuladoBtn.addEventListener("click", startSimulado);
     el.resetStatsBtn.addEventListener("click", resetStats);
 
     el.answerBtn.addEventListener("click", submitAnswer);

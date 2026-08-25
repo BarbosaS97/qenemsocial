@@ -20,6 +20,7 @@
   --color-accent: #ffd21a;
   --color-accent-bg: #fff8e1;
   --color-purple: #321080;
+  --color-purple-tint: #ddd0f5;
   --color-magenta: #8b19e8;
   --color-lime: #a8f000;
   --color-green-vivid: #36e83f;
@@ -78,18 +79,27 @@ select {
   outline-offset: 2px;
 }
 
-/* Header: título + filtros, nada além disso */
+/* Header: uma barra única (logo + filtros compartilham o mesmo fundo), mais
+   larga que a coluna de leitura do resto do app — uma toolbar de verdade,
+   não a logo isolada com um cartão flutuando ao lado. */
 .app-header {
-  background: var(--color-surface);
+  background: linear-gradient(135deg, var(--color-primary-tint), var(--color-accent-bg));
   border-bottom: 3px solid transparent;
   border-image: linear-gradient(90deg, var(--color-accent), var(--color-magenta), var(--color-primary)) 1;
-  padding: 20px 0 24px;
+  padding: 14px 0;
+}
+
+/* Mais largo que o .container padrão (720px) usado pelo conteúdo — dá à
+   barra espaço de sobra para respirar em vez de espremer logo e filtros
+   num vão estreito com um buraco de espaço em branco no meio. */
+.app-header .container {
+  max-width: 1100px;
 }
 
 .header-inner {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .app-title {
@@ -100,61 +110,68 @@ select {
 
 .logo-img {
   display: block;
-  height: 40px;
+  height: 36px;
   width: auto;
 }
 
-.filters {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* Sem cartão próprio: o fundo colorido já é o do header inteiro, então os
+   filtros só precisam organizar o layout, não "flutuar" como um widget à
+   parte. */
+.filters-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .filter-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .filter-field label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 select {
   min-height: var(--tap-min);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  font-size: 1rem;
+  border: 1.5px solid var(--color-border);
+  font-size: 0.95rem;
   background: var(--color-surface);
   color: var(--color-text);
   width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+select:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-tint);
+  outline: none;
 }
 
 .filter-actions {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-/* Sempre ocupa a linha inteira, embaixo dos outros dois botões — evita texto
-   espremido em 3 colunas apertadas em telas pequenas. */
-.custom-simulado-btn {
-  grid-column: 1 / -1;
+  gap: 8px;
 }
 
 /* Botões */
 .btn {
   min-height: var(--tap-min);
-  padding: 10px 20px;
+  padding: 10px 16px;
   border-radius: var(--radius-sm);
   border: none;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.05s ease, background 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.05s ease, background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 .btn:active {
@@ -167,12 +184,27 @@ select {
 }
 
 .btn-primary {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   color: white;
+  box-shadow: 0 2px 8px rgba(0, 158, 255, 0.25);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
+  box-shadow: 0 4px 12px rgba(0, 158, 255, 0.35);
+}
+
+/* Dourado sobre roxo: mesma dupla de cores do sublinhado do header, dando
+   ao "Simulado personalizado" uma identidade visual própria (não é só mais
+   um botão azul igual ao "Praticar"). */
+.btn-accent {
+  background: var(--color-accent);
+  color: var(--color-purple);
+  box-shadow: 0 2px 8px rgba(255, 210, 26, 0.35);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: #ffc700;
+  box-shadow: 0 4px 12px rgba(255, 210, 26, 0.45);
 }
 
 .btn-outline {
@@ -482,17 +514,23 @@ main.container {
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
+    gap: 16px;
   }
 
-  .filters {
-    flex-direction: row;
+  /* Vira uma única barra horizontal compacta: ano, disciplina e os dois
+     botões lado a lado, alinhados à direita da logo, dividindo o mesmo
+     fundo colorido do header — uma peça só, não dois blocos separados. */
+  .filters-bar {
+    display: flex;
+    flex-wrap: wrap;
     align-items: flex-end;
     flex: 1;
     justify-content: flex-end;
+    gap: 10px;
   }
 
   .filter-field {
-    min-width: 150px;
+    min-width: 140px;
   }
 
   select {
@@ -500,7 +538,9 @@ main.container {
   }
 
   .filter-actions {
-    grid-template-columns: auto auto;
+    grid-column: auto;
+    display: flex;
+    gap: 8px;
   }
 
   .nav-row {
@@ -636,8 +676,8 @@ main.container {
 
 .chat-message.role-assistant {
   align-self: flex-start;
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--color-purple-tint);
+  color: #000;
   border-bottom-left-radius: 2px;
 }
 
