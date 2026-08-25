@@ -36,6 +36,7 @@
         <div class="filter-actions">
           <button id="load-btn" class="btn btn-primary">Praticar</button>
           <button id="simulado-btn" class="btn btn-outline">Simulado</button>
+          <button id="custom-simulado-btn" class="btn btn-ghost custom-simulado-btn">Simulado personalizado</button>
         </div>
       </div>
     </div>
@@ -93,6 +94,26 @@
       <button id="back-to-practice-btn" class="btn btn-primary btn-block">Voltar</button>
     </section>
   </main>
+
+  <div id="custom-simulado-modal" class="modal-overlay hidden">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="custom-simulado-title">
+      <div class="modal-header">
+        <h2 id="custom-simulado-title">Simulado personalizado</h2>
+        <button type="button" id="custom-simulado-close" class="modal-close" aria-label="Fechar">×</button>
+      </div>
+
+      <p class="modal-hint">
+        Escolha quantas questões você quer de cada disciplina (ano <span id="custom-simulado-year"></span>).
+      </p>
+
+      <div id="custom-simulado-rows" class="custom-simulado-rows"></div>
+
+      <div class="custom-simulado-footer">
+        <span id="custom-simulado-total" class="custom-simulado-total">0 questões selecionadas</span>
+        <button type="button" id="custom-simulado-generate" class="btn btn-primary" disabled>Gerar simulado</button>
+      </div>
+    </div>
+  </div>
 
   <div id="chat-sheet" class="chat-sheet">
     <div class="chat-header">

@@ -10,6 +10,7 @@ const DISCIPLINES = [
 
 const MIN_YEAR = 2009;
 const MAX_YEAR = 2023;
+const CUSTOM_SIMULADO_MAX_PER_DISCIPLINE = 45;
 
 const App = (() => {
   const state = {
@@ -52,6 +53,14 @@ const App = (() => {
 
     el.resultsSummary = document.getElementById("results-summary");
     el.backToPracticeBtn = document.getElementById("back-to-practice-btn");
+
+    el.customSimuladoBtn = document.getElementById("custom-simulado-btn");
+    el.customSimuladoModal = document.getElementById("custom-simulado-modal");
+    el.customSimuladoClose = document.getElementById("custom-simulado-close");
+    el.customSimuladoYear = document.getElementById("custom-simulado-year");
+    el.customSimuladoRows = document.getElementById("custom-simulado-rows");
+    el.customSimuladoTotal = document.getElementById("custom-simulado-total");
+    el.customSimuladoGenerate = document.getElementById("custom-simulado-generate");
   }
 
   function populateSelects() {
@@ -180,6 +189,145 @@ const App = (() => {
       state.currentIndex = 0;
       state.answers = {};
       setStatus("");
+      showView("question");
+      renderQuestion();
+    } catch (err) {
+      setStatus(`Erro: ${err.message}`, true);
+    }
+  }
+
+  // Simulado personalizado: o aluno escolhe quantas questões quer de cada
+  // disciplina (ex: 5 Linguagens + 3 Ciências Humanas + 7 Matemática = 15).
+  // Complementa o "Simulado" de 10 questões aleatórias, não o substitui —
+  // quem quer rapidez continua usando o botão de sempre.
+  const customSimuladoInputs = {}; // { [disciplineValue]: <input> }
+
+  function renderCustomSimuladoRows() {
+    if (el.customSimuladoRows.childElementCount > 0) return; // só monta uma vez
+
+    DISCIPLINES.filter((d) => d.value !== "").forEach((d) => {
+      const row = document.createElement("div");
+      row.className = "custom-simulado-row";
+
+      const label = document.createElement("span");
+      label.className = "custom-simulado-row-label";
+      label.textContent = d.label;
+
+      const stepper = document.createElement("div");
+      stepper.className = "stepper";
+
+      const decrementBtn = document.createElement("button");
+      decrementBtn.type = "button";
+      decrementBtn.className = "stepper-btn";
+      decrementBtn.dataset.action = "decrement";
+      decrementBtn.dataset.discipline = d.value;
+      decrementBtn.setAttribute("aria-label", `Diminuir questões de ${d.label}`);
+      decrementBtn.textContent = "−";
+
+      const input = document.createElement("input");
+      input.type = "number";
+      input.className = "stepper-input";
+      input.min = "0";
+      input.max = String(CUSTOM_SIMULADO_MAX_PER_DISCIPLINE);
+      input.value = "0";
+      input.inputMode = "numeric";
+      input.dataset.discipline = d.value;
+      input.setAttribute("aria-label", `Quantidade de questões de ${d.label}`);
+
+      const incrementBtn = document.createElement("button");
+      incrementBtn.type = "button";
+      incrementBtn.className = "stepper-btn";
+      incrementBtn.dataset.action = "increment";
+      incrementBtn.dataset.discipline = d.value;
+      incrementBtn.setAttribute("aria-label", `Aumentar questões de ${d.label}`);
+      incrementBtn.textContent = "+";
+
+      stepper.appendChild(decrementBtn);
+      stepper.appendChild(input);
+      stepper.appendChild(incrementBtn);
+      row.appendChild(label);
+      row.appendChild(stepper);
+      el.customSimuladoRows.appendChild(row);
+
+      customSimuladoInputs[d.value] = input;
+    });
+  }
+
+  function clampCustomSimuladoInput(input) {
+    const value = Math.round(Number(input.value));
+    const clamped = Math.min(Math.max(Number.isFinite(value) ? value : 0, 0), CUSTOM_SIMULADO_MAX_PER_DISCIPLINE);
+    input.value = String(clamped);
+    return clamped;
+  }
+
+  function updateCustomSimuladoTotal() {
+    const total = Object.values(customSimuladoInputs).reduce(
+      (sum, input) => sum + clampCustomSimuladoInput(input),
+      0,
+    );
+    el.customSimuladoTotal.textContent = `${total} questõ${total === 1 ? "e" : "es"} selecionada${total === 1 ? "" : "s"}`;
+    el.customSimuladoGenerate.disabled = total === 0;
+    return total;
+  }
+
+  function openCustomSimuladoModal() {
+    renderCustomSimuladoRows();
+    el.customSimuladoYear.textContent = el.yearSelect.value;
+    updateCustomSimuladoTotal();
+    el.customSimuladoModal.classList.remove("hidden");
+    const firstInput = el.customSimuladoRows.querySelector(".stepper-input");
+    if (firstInput) firstInput.focus();
+  }
+
+  function closeCustomSimuladoModal() {
+    el.customSimuladoModal.classList.add("hidden");
+  }
+
+  async function startCustomSimulado() {
+    const selections = Object.entries(customSimuladoInputs)
+      .map(([discipline, input]) => ({ discipline, count: clampCustomSimuladoInput(input) }))
+      .filter((s) => s.count > 0);
+
+    if (selections.length === 0) return;
+
+    const year = el.yearSelect.value;
+    const requestedTotal = selections.reduce((sum, s) => sum + s.count, 0);
+
+    closeCustomSimuladoModal();
+    state.mode = "simulado";
+    state.filters.year = year;
+    state.filters.discipline = "";
+
+    setStatus("Montando seu simulado personalizado...");
+    showView(null);
+
+    try {
+      const results = await Promise.all(
+        selections.map((s) => Questions.fetchRandom({ year, discipline: s.discipline, limit: s.count })),
+      );
+
+      const questions = results.flatMap((r) => r.questions || []);
+
+      if (questions.length === 0) {
+        setStatus("Não foi possível montar o simulado — nenhuma questão encontrada para esse ano e essas disciplinas.", true);
+        return;
+      }
+
+      // Embaralha para misturar as disciplinas em vez de vir em blocos.
+      const shuffled = questions.sort(() => Math.random() - 0.5);
+
+      state.questions = shuffled;
+      state.currentIndex = 0;
+      state.answers = {};
+
+      if (questions.length < requestedTotal) {
+        setStatus(
+          `Encontramos ${questions.length} de ${requestedTotal} questões pedidas para ${year} (algumas disciplinas tinham menos disponíveis).`,
+        );
+      } else {
+        setStatus("");
+      }
+
       showView("question");
       renderQuestion();
     } catch (err) {
@@ -347,6 +495,34 @@ const App = (() => {
     el.prevBtn.addEventListener("click", () => goToQuestion(-1));
     el.nextBtn.addEventListener("click", () => goToQuestion(1));
     el.backToPracticeBtn.addEventListener("click", backToPractice);
+
+    el.customSimuladoBtn.addEventListener("click", openCustomSimuladoModal);
+    el.customSimuladoClose.addEventListener("click", closeCustomSimuladoModal);
+    el.customSimuladoGenerate.addEventListener("click", startCustomSimulado);
+
+    el.customSimuladoModal.addEventListener("click", (e) => {
+      if (e.target === el.customSimuladoModal) closeCustomSimuladoModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !el.customSimuladoModal.classList.contains("hidden")) {
+        closeCustomSimuladoModal();
+      }
+    });
+
+    el.customSimuladoRows.addEventListener("click", (e) => {
+      const btn = e.target.closest(".stepper-btn");
+      if (!btn) return;
+      const input = customSimuladoInputs[btn.dataset.discipline];
+      const current = clampCustomSimuladoInput(input);
+      const delta = btn.dataset.action === "increment" ? 1 : -1;
+      input.value = String(current + delta);
+      updateCustomSimuladoTotal();
+    });
+
+    el.customSimuladoRows.addEventListener("input", (e) => {
+      if (e.target.classList.contains("stepper-input")) updateCustomSimuladoTotal();
+    });
   }
 
   function init() {

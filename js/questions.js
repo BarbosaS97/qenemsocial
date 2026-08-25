@@ -1,7 +1,23 @@
 // QEnemSocial - acesso a questões (via Edge Function) e estatísticas locais
 
 const Questions = (() => {
-  async function callEdgeFunction(params) {
+  const MAX_ATTEMPTS = 3;
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // Falhas passageiras de infraestrutura (5xx, ou erros de validação de
+  // token intermitentes tipo "JWT issued at future" — sintoma conhecido de
+  // dessincronia de relógio entre nós de borda) merecem uma segunda chance
+  // antes de desistir. Isso fica estatisticamente mais provável quando várias
+  // chamadas saem ao mesmo tempo (ex: simulado personalizado, uma requisição
+  // por disciplina em paralelo) do que numa chamada isolada.
+  function isTransientError(status, message) {
+    return status >= 500 || /jwt/i.test(message || "");
+  }
+
+  async function callEdgeFunction(params, attempt = 1) {
     const url = new URL(CONFIG.EDGE_FUNCTION_URL);
     Object.entries(params).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== "") {
@@ -18,7 +34,14 @@ const Questions = (() => {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new Error(body.error || `Erro ao buscar questões (HTTP ${res.status})`);
+      const message = body.error || `Erro ao buscar questões (HTTP ${res.status})`;
+
+      if (isTransientError(res.status, message) && attempt < MAX_ATTEMPTS) {
+        await sleep(300 * attempt);
+        return callEdgeFunction(params, attempt + 1);
+      }
+
+      throw new Error(message);
     }
 
     return res.json();
