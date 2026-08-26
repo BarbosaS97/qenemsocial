@@ -59,16 +59,73 @@ function isValidMessage(msg: unknown): msg is ChatMessage {
   );
 }
 
-function buildSystemPrompt(question: QuestionContext): string {
+// Palavras/expressões que indicam que o aluno está pedindo a resposta em si
+// (não só ajuda/explicação/dica). Checamos só a ÚLTIMA mensagem do aluno —
+// cada requisição reavalia isso do zero, então pedir ajuda primeiro e a
+// resposta depois funciona normalmente.
+const ANSWER_REQUEST_PATTERNS = [
+  /\bresposta\b/,
+  /\bgabarito\b/,
+  /\bqual\s+(e\s+)?a\s+(alternativa\s+)?(certa|correta)\b/,
+  /\bqual\s+alternativa\b/,
+  /\bqual\s+(a\s+)?letra\b/,
+  /\bqual\s+(a\s+)?opcao\b/,
+  /\b(me\s+)?(da|diz|fala)\s+a\s+resposta\b/,
+  /\bta\s+certo\b/,
+  /\besta\s+certo\b/,
+];
+
+// Remove acentos comparando pontos de código (0x0300-0x036f = marcas de
+// acento combinantes depois de normalizar em NFD, ex: "e" + acento agudo
+// separados). Escrito só com números hexadecimais de propósito -- evita
+// colocar caracteres combinantes literais no código-fonte, que corrompem
+// fácil ao serem salvos/copiados. Assim "responde" casa com "respondê",
+// "opcao" com "opção", etc.
+function normalize(text: string): string {
+  const letters: string[] = [];
+  for (const ch of text.toLowerCase().normalize("NFD")) {
+    const code = ch.codePointAt(0)!;
+    const isCombiningMark = code >= 0x0300 && code <= 0x036f;
+    if (!isCombiningMark) letters.push(ch);
+  }
+  return letters.join("");
+}
+
+function studentWantsAnswer(messages: ChatMessage[]): boolean {
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  if (!lastUser) return false;
+  const normalized = normalize(lastUser.content);
+  return ANSWER_REQUEST_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
+// revealAnswer controla se o gabarito É ENVIADO à DeepSeek. Isso não é só uma
+// instrução de "não conte" no prompt (o modelo poderia ignorar ou vazar sem
+// querer) — quando o aluno não pediu, o modelo literalmente não recebe qual
+// é a alternativa correta, então não tem como revelar por engano.
+function buildSystemPrompt(question: QuestionContext, revealAnswer: boolean): string {
   const alternativesText = (question.alternatives ?? [])
     .map((a) => `${a.letter}) ${a.text}`)
     .join("\n");
+
+  const answerRule = revealAnswer
+    ? [
+        "O aluno PEDIU a resposta. Pode revelar qual alternativa é a correta (veja o gabarito abaixo) e explicar o porquê.",
+        `Gabarito (alternativa correta): ${question.correctAnswer ?? "não informado"}`,
+      ].join("\n")
+    : [
+        "O aluno NÃO pediu a resposta ainda — só ajuda, explicação, dica ou esclarecimento. O gabarito foi",
+        "propositalmente omitido abaixo: você não sabe qual alternativa é a correta. Ajude o aluno a entender o",
+        "conteúdo, os conceitos envolvidos e o raciocínio necessário para resolver a questão, mas NÃO afirme qual",
+        "alternativa está certa ou errada, e não elimine as alternativas uma a uma de um jeito que deixe óbvio qual",
+        "sobra — o objetivo é o aluno chegar sozinho à conclusão. Se ele quiser saber a resposta direta, ele pode",
+        "pedir explicitamente (ex: \"qual é a resposta?\").",
+        "Gabarito (alternativa correta): (omitido — não pedido pelo aluno)",
+      ].join("\n");
 
   return [
     "Você é o Pepito, um tutor educacional especializado em ajudar estudantes a entenderem questões do ENEM.",
     "Responda SEMPRE em português do Brasil, de forma clara, direta e didática.",
     "Baseie suas respostas exclusivamente na questão fornecida abaixo. Não invente informações que não estejam no enunciado.",
-    "Se o aluno perguntar por que uma alternativa está certa ou errada, explique o raciocínio passo a passo.",
     "Se a pergunta não tiver relação com esta questão, gentilmente redirecione o aluno de volta ao tema.",
     "Escreva em texto corrido, como numa conversa falada. Não use markdown: nada de asteriscos, hífens de lista, cabeçalhos ou negrito/itálico. Organize as ideias em parágrafos curtos e bem separados por uma linha em branco, em vez de listas.",
     "",
@@ -82,7 +139,7 @@ function buildSystemPrompt(question: QuestionContext): string {
     "Alternativas:",
     alternativesText || "(sem alternativas)",
     "",
-    `Gabarito (alternativa correta): ${question.correctAnswer ?? "não informado"}`,
+    answerRule,
   ].join("\n");
 }
 
@@ -201,7 +258,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const systemPrompt = buildSystemPrompt(question);
+    const revealAnswer = studentWantsAnswer(messages);
+    const systemPrompt = buildSystemPrompt(question, revealAnswer);
     const reply = await callDeepSeek([{ role: "system", content: systemPrompt }, ...messages]);
 
     return jsonResponse({

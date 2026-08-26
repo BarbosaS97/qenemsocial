@@ -114,12 +114,7 @@
     </div>
   </div>
 
-  <div id="chat-sheet" class="chat-sheet">
-    <div class="chat-header">
-      <span class="chat-title">Pepito</span>
-      <span id="chat-usage" class="chat-usage">0/10 mensagens</span>
-    </div>
-
+  <div id="chat-body" class="chat-body">
     <div id="chat-messages" class="chat-messages"></div>
 
     <form id="chat-form" class="chat-form">
@@ -128,16 +123,30 @@
     </form>
   </div>
 
+  <!-- O cabeçalho é, ao mesmo tempo, a barra sempre visível no rodapé (quando
+       fechado) e o topo do chat (quando aberto) — e também a alça de
+       arrastar/clicar. Sem lapela separada: fechado, só ele já mostra quem é
+       o Pepito. -->
   <button
     type="button"
-    id="chat-tab"
-    class="chat-tab"
+    id="chat-header"
+    class="chat-header"
     aria-expanded="false"
-    aria-controls="chat-sheet"
-    aria-label="Arrastar ou abrir o chat do Pepito"
+    aria-controls="chat-body"
+    aria-label="Abrir ou arrastar o chat do Pepito"
   >
-    <span class="chat-wave" aria-hidden="true"></span>
-    <span id="chat-toggle-icon" class="chat-toggle-icon" aria-hidden="true">⌃</span>
+    <div class="chat-header-info">
+      <span class="chat-avatar-wrap">
+        <img src="images/avatar.png" alt="" class="chat-avatar" />
+        <span class="chat-indicator online" aria-hidden="true"></span>
+      </span>
+      <span class="chat-title">IA Pepito</span>
+      <span class="chat-badge">Assistant</span>
+    </div>
+    <div class="chat-header-meta">
+      <span id="chat-usage" class="chat-usage">0/10 mensagens</span>
+      <span id="chat-toggle-icon" class="chat-arrow" aria-hidden="true">▶</span>
+    </div>
   </button>
 
   <script src="js/config.js"></script>
