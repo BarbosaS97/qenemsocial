@@ -102,6 +102,7 @@
           </a>
 
           <nav class="hidden items-center gap-8 sm:flex">
+            <a href="#pepito" class="text-sm font-medium text-white/80 transition-colors hover:text-white">Pepito</a>
             <a href="#como-funciona" class="text-sm font-medium text-white/80 transition-colors hover:text-white">Como funciona</a>
             <a href="#sobre" class="text-sm font-medium text-white/80 transition-colors hover:text-white">Sobre</a>
           </nav>
@@ -129,33 +130,163 @@
           <div class="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-brand-yellow/25 blur-3xl"></div>
         </div>
 
-        <div id="hero-content" class="relative mx-auto max-w-3xl px-6 text-center">
-          <h1 class="text-4xl font-bold leading-tight tracking-[-0.02em] text-gray-900 md:text-6xl">
-            Você vai alcançar o seu
-            <span class="bg-gradient-to-r from-brand-blue via-[#7C3AED] to-brand-purple bg-clip-text text-transparent">sonho</span>,
-            e esse projeto irá te ajudar.
-          </h1>
-          <p class="mx-auto mt-6 max-w-xl text-lg text-brand-text md:text-xl">Mais de 2.500 questões do ENEM. De graça.</p>
+        <div id="hero-content" class="relative mx-auto grid max-w-6xl items-center gap-12 px-6 md:grid-cols-2 md:gap-16">
+          <!-- Coluna de texto: alinhada à esquerda no desktop (o mockup do
+               chat ocupa a coluna da direita), centralizada no mobile. -->
+          <div class="text-center md:text-left">
+            <h1 class="text-4xl font-bold leading-tight tracking-[-0.02em] text-gray-900 md:text-5xl lg:text-6xl">
+              Seu
+              <span class="bg-gradient-to-r from-brand-blue via-[#7C3AED] to-brand-purple bg-clip-text text-transparent">tutor de IA</span>
+              para o ENEM.
+            </h1>
+            <p class="mx-auto mt-6 max-w-xl text-lg text-brand-text md:mx-0 md:text-xl">
+              Pepito tira suas dúvidas, explica questões e te acompanha rumo à vaga dos sonhos.
+            </p>
 
-          <a
-            href="/estudar.html"
-            class="mt-10 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-brand-blue to-[#3B82F6] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-blue/25 transition-transform hover:scale-105"
-          >
-            Acessar plataforma
-          </a>
+            <div class="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center md:justify-start">
+              <a
+                href="/estudar.html"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-blue to-[#3B82F6] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-blue/25 transition-transform hover:scale-105"
+              >
+                Começar agora
+                <span aria-hidden="true">→</span>
+              </a>
+              <a
+                href="#pepito"
+                class="inline-flex items-center justify-center rounded-full border border-brand-border bg-white px-8 py-4 text-base font-semibold text-brand-text transition-colors hover:border-brand-blue hover:text-brand-blue"
+              >
+                Conhecer o Pepito
+              </a>
+            </div>
 
-          <div class="mt-12 flex flex-wrap items-center justify-center gap-x-14 gap-y-6">
-            <div>
-              <p class="text-2xl font-bold text-brand-blue">+2.500</p>
-              <p class="text-sm text-gray-500">questões</p>
+            <div class="mt-12 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 md:justify-start">
+              <div>
+                <p class="text-2xl font-bold text-brand-blue">+2.500</p>
+                <p class="text-sm text-gray-500">questões</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-brand-purple">2009–2023</p>
+                <p class="text-sm text-gray-500">provas oficiais</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-brand-blue">24h</p>
+                <p class="text-sm text-gray-500">Pepito disponível</p>
+              </div>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-brand-purple">2009–2023</p>
-              <p class="text-sm text-gray-500">provas oficiais</p>
+          </div>
+
+          <!-- Mockup do chat do Pepito em ação: prova visual imediata do
+               diferencial, sem precisar sair da hero pra entender o que é. -->
+          <div class="relative mx-auto w-full max-w-sm">
+            <div class="absolute -inset-4 rounded-3xl bg-gradient-to-br from-brand-blue/25 via-brand-purple/20 to-brand-yellow/25 blur-2xl" aria-hidden="true"></div>
+            <div class="relative overflow-hidden rounded-2xl border border-brand-border bg-white shadow-2xl shadow-brand-purple/10">
+              <div class="flex items-center gap-3 bg-gradient-to-r from-brand-purple via-[#3B1291] to-brand-purple px-4 py-3">
+                <img src="images/avatar2.png" alt="" class="h-9 w-9 rounded-full border-2 border-white/40 object-cover" />
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-white">IA Pepito</p>
+                  <p class="text-xs text-white/70">online agora</p>
+                </div>
+                <span class="h-2.5 w-2.5 rounded-full bg-brand-yellow" aria-hidden="true"></span>
+              </div>
+              <div class="flex flex-col gap-3 p-4">
+                <div class="max-w-[85%] rounded-lg rounded-bl-sm bg-brand-bg px-3 py-2 text-sm text-brand-text">
+                  Oi! Sobre qual questão você quer tirar dúvida hoje?
+                </div>
+                <div class="ml-auto max-w-[85%] rounded-lg rounded-br-sm bg-brand-blue px-3 py-2 text-sm text-white">
+                  Não entendi por que a alternativa C está errada
+                </div>
+                <div class="max-w-[85%] rounded-lg rounded-bl-sm bg-brand-bg px-3 py-2 text-sm text-brand-text">
+                  Boa pergunta! Repara que o enunciado fala em "crescimento populacional", não em densidade — é aí que a C foge do tema. Bora ver juntos?
+                </div>
+              </div>
+              <div class="flex items-center gap-2 border-t border-brand-border p-3">
+                <div class="flex-1 rounded-full border border-brand-border bg-brand-bg px-3 py-2 text-xs text-gray-400">Pergunte ao Pepito...</div>
+                <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-blue text-white" aria-hidden="true">→</span>
+              </div>
             </div>
-            <div>
-              <p class="text-2xl font-bold text-brand-blue">100%</p>
-              <p class="text-sm text-gray-500">gratuito</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vitrine do Pepito: seção própria, com fundo escuro (contraste com o
+           resto da página, quase todo claro) pra sinalizar "isto aqui é o
+           diferencial" antes mesmo de ler o texto. É o alvo do CTA
+           secundário da hero ("Conhecer o Pepito") e do link de nav. -->
+      <section id="pepito" class="relative overflow-hidden bg-gradient-to-b from-brand-purple via-[#2A0E5C] to-brand-purple py-24 md:py-32">
+        <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+          <div class="absolute -left-20 top-10 h-72 w-72 rounded-full bg-brand-blue/20 blur-3xl"></div>
+          <div class="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-brand-yellow/10 blur-3xl"></div>
+        </div>
+
+        <div class="relative mx-auto grid max-w-6xl items-center gap-12 px-6 md:grid-cols-2 md:gap-16">
+          <div class="order-2 text-center md:order-1 md:text-left">
+            <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-yellow">
+              Inteligência artificial
+            </span>
+            <h2 class="mt-5 text-3xl font-bold leading-tight tracking-[-0.02em] text-white md:text-4xl">
+              Um tutor particular que explica até você entender
+            </h2>
+            <p class="mx-auto mt-5 max-w-lg text-lg text-white/80 md:mx-0">
+              O Pepito lê a questão junto com você, explica o raciocínio passo a passo e responde quantas vezes você
+              perguntar — sem pressa e sem julgamento.
+            </p>
+
+            <div class="mt-10 grid gap-4 sm:grid-cols-3 md:gap-3">
+              <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-left">
+                <p class="font-semibold text-white">Na hora</p>
+                <p class="mt-1 text-sm text-white/70">Sem fila, sem esperar o professor no dia seguinte.</p>
+              </div>
+              <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-left">
+                <p class="font-semibold text-white">Quantas vezes precisar</p>
+                <p class="mt-1 text-sm text-white/70">Pergunte de novo até fazer sentido de verdade.</p>
+              </div>
+              <div class="rounded-lg border border-white/10 bg-white/5 p-4 text-left">
+                <p class="font-semibold text-white">Passo a passo</p>
+                <p class="mt-1 text-sm text-white/70">Mostra o raciocínio completo, não só a resposta certa.</p>
+              </div>
+            </div>
+
+            <a
+              href="/estudar.html"
+              class="mt-10 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-blue to-[#3B82F6] px-8 py-4 text-base font-semibold text-white shadow-lg shadow-black/20 transition-transform hover:scale-105"
+            >
+              Testar o Pepito agora
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <div class="relative order-1 mx-auto w-full max-w-sm md:order-2">
+            <div class="absolute -inset-4 rounded-3xl bg-white/10 blur-2xl" aria-hidden="true"></div>
+            <div class="relative overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl">
+              <div class="flex items-center gap-3 bg-gradient-to-r from-brand-purple via-[#3B1291] to-brand-purple px-4 py-3">
+                <img src="images/avatar.png" alt="" class="h-9 w-9 rounded-full border-2 border-white/40 object-cover" />
+                <div class="flex-1">
+                  <p class="text-sm font-semibold text-white">IA Pepito</p>
+                  <p class="text-xs text-white/70">online agora</p>
+                </div>
+                <span class="h-2.5 w-2.5 rounded-full bg-brand-yellow" aria-hidden="true"></span>
+              </div>
+              <div class="flex flex-col gap-3 p-4">
+                <div class="ml-auto max-w-[85%] rounded-lg rounded-br-sm bg-brand-blue px-3 py-2 text-sm text-white">
+                  Como eu sei se uma questão de matemática é de proporção?
+                </div>
+                <div class="max-w-[85%] rounded-lg rounded-bl-sm bg-brand-bg px-3 py-2 text-sm text-brand-text">
+                  Ótima pergunta! Repare se o enunciado relaciona duas grandezas que crescem ou diminuem juntas —
+                  tipo "quanto mais X, mais Y". Isso é o sinal clássico de proporção.
+                </div>
+                <div class="ml-auto max-w-[85%] rounded-lg rounded-br-sm bg-brand-blue px-3 py-2 text-sm text-white">
+                  Entendi! E é direta ou inversa aqui?
+                </div>
+                <div class="flex items-center gap-1.5 rounded-lg rounded-bl-sm bg-brand-bg px-3 py-2.5" aria-label="Pepito está digitando">
+                  <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.3s]"></span>
+                  <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400 [animation-delay:-0.15s]"></span>
+                  <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-gray-400"></span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 border-t border-brand-border p-3">
+                <div class="flex-1 rounded-full border border-brand-border bg-brand-bg px-3 py-2 text-xs text-gray-400">Pergunte ao Pepito...</div>
+                <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-blue text-white" aria-hidden="true">→</span>
+              </div>
             </div>
           </div>
         </div>
@@ -265,13 +396,14 @@
 
     <footer class="bg-brand-purple py-16">
       <div class="mx-auto max-w-3xl px-6 text-center">
-        <p class="text-xl font-semibold tracking-[-0.02em] text-white">Estudar para o ENEM não precisa custar uma fortuna.</p>
+        <p class="text-xl font-semibold tracking-[-0.02em] text-white">Sua próxima questão — e sua vaga — começam agora, com o Pepito.</p>
 
         <a
           href="/estudar.html"
-          class="mt-8 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-brand-blue to-[#3B82F6] px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-blue/25 transition-transform hover:scale-105"
+          class="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-brand-blue to-[#3B82F6] px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-blue/25 transition-transform hover:scale-105"
         >
-          Acessar plataforma
+          Começar agora
+          <span aria-hidden="true">→</span>
         </a>
 
         <nav class="mt-10 flex flex-wrap justify-center gap-6 text-sm">
