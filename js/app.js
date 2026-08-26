@@ -93,6 +93,34 @@ const App = (() => {
     }[c]));
   }
 
+  // Não existe LaTeX nos dados da API enem.dev — o que aparecia como "código
+  // bruto" era markdown que nunca era interpretado: **negrito** (citações
+  // bibliográficas) e colchetes escapados \[…\] (reticência de trecho
+  // omitido, comum em textos de Linguagens). Escapamos o HTML primeiro (segurança)
+  // e só depois aplicamos essas duas transformações.
+  function formatInlineText(str) {
+    let html = escapeHtml(str);
+    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\\([[\]()*_\\])/g, "$1");
+    return html;
+  }
+
+  // A própria API enem.dev usa essa URL como valor-sentinela para "não temos
+  // essa imagem" (renderiza um cartum "Sorry! This image is broken..." com
+  // link para abrir PR no repositório deles). Não é uma URL nossa quebrada —
+  // é uma lacuna real nos dados de origem (rara: ~5 de 2.689 questões, todas
+  // do ENEM 2023). Trocamos pelo nosso próprio aviso, mais discreto.
+  function isMissingImagePlaceholder(url) {
+    return url.includes("broken-image");
+  }
+
+  function renderImageOrPlaceholder(url) {
+    if (isMissingImagePlaceholder(url)) {
+      return `<div class="q-image-missing">Imagem não disponível para esta questão.</div>`;
+    }
+    return `<img class="q-image" src="${escapeHtml(url)}" alt="Imagem da questão" loading="lazy">`;
+  }
+
   // A API enem.dev embute as imagens do enunciado como markdown (![](url))
   // dentro de `context`, na posição exata em que devem aparecer na leitura.
   // `files` traz as mesmas URLs à parte; usamos como rede de segurança para
@@ -105,16 +133,16 @@ const App = (() => {
     let lastIndex = 0;
     let match;
     while ((match = imageRegex.exec(text)) !== null) {
-      html += escapeHtml(text.slice(lastIndex, match.index)).replace(/\n/g, "<br>");
-      html += `<img class="q-image" src="${escapeHtml(match[1])}" alt="Imagem da questão" loading="lazy">`;
+      html += formatInlineText(text.slice(lastIndex, match.index)).replace(/\n/g, "<br>");
+      html += renderImageOrPlaceholder(match[1]);
       usedFiles.add(match[1]);
       lastIndex = imageRegex.lastIndex;
     }
-    html += escapeHtml(text.slice(lastIndex)).replace(/\n/g, "<br>");
+    html += formatInlineText(text.slice(lastIndex)).replace(/\n/g, "<br>");
 
     (files || []).forEach((url) => {
       if (!usedFiles.has(url)) {
-        html += `<img class="q-image" src="${escapeHtml(url)}" alt="Imagem da questão" loading="lazy">`;
+        html += renderImageOrPlaceholder(url);
       }
     });
 
@@ -338,16 +366,26 @@ const App = (() => {
       span.appendChild(strong);
 
       if (alt.text) {
-        span.appendChild(document.createTextNode(` ${alt.text}`));
+        span.insertAdjacentHTML("beforeend", ` ${formatInlineText(alt.text)}`);
       }
 
       if (alt.file) {
-        const img = document.createElement("img");
-        img.src = alt.file;
-        img.alt = `Alternativa ${alt.letter}`;
-        img.className = "alt-image";
-        img.loading = "lazy";
-        span.appendChild(img);
+        if (isMissingImagePlaceholder(alt.file)) {
+          span.insertAdjacentHTML("beforeend", `<div class="q-image-missing">Imagem não disponível para esta alternativa.</div>`);
+        } else {
+          const img = document.createElement("img");
+          img.src = alt.file;
+          img.alt = `Alternativa ${alt.letter}`;
+          img.className = "alt-image";
+          img.loading = "lazy";
+          span.appendChild(img);
+        }
+      } else if (!alt.text) {
+        // Raro, mas acontece na fonte de dados: alternativa sem texto E sem
+        // imagem (ex: questão com gráficos como opções, onde só algumas
+        // imagens foram capturadas). Sem isso, a alternativa aparece em
+        // branco, parecendo quebrada.
+        span.insertAdjacentHTML("beforeend", `<span class="alt-missing">Conteúdo não disponível para esta alternativa.</span>`);
       }
 
       label.appendChild(input);

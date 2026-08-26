@@ -369,6 +369,24 @@ main.container {
   background: var(--color-bg);
 }
 
+/* Aviso discreto para imagens que faltam na fonte de dados (a própria API
+   sinaliza isso com um cartum de erro; preferimos um recado nosso e claro). */
+.q-image-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  margin: 12px 0;
+  padding: 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+}
+
 .alternatives {
   display: flex;
   flex-direction: column;
@@ -421,6 +439,13 @@ main.container {
   height: auto;
   border-radius: var(--radius-sm);
   margin-top: 8px;
+}
+
+/* Alternativa sem texto e sem imagem na fonte de dados (raro) — melhor um
+   aviso claro do que a opção aparecer em branco, parecendo quebrada. */
+.alt-missing {
+  color: var(--color-text-muted);
+  font-style: italic;
 }
 
 .alternative.is-correct {

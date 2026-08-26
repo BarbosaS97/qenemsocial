@@ -8,6 +8,8 @@
 
 const Pepito = (() => {
   const SESSION_KEY = "qenemsocial_chat_session";
+  const HISTORY_STORAGE_KEY = "qenemsocial_chat_history";
+  const MAX_STORED_CONVERSATIONS = 50;
   const TRANSITION = "height 0.32s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.32s cubic-bezier(0.22, 1, 0.36, 1)";
   const TOP_MARGIN = 16;
   const DEFAULT_OPEN_RATIO = 0.6;
@@ -36,6 +38,56 @@ const Pepito = (() => {
       sessionStorage.setItem(SESSION_KEY, id);
     }
     return id;
+  }
+
+  // Conversa com o Pepito guardada por questão (localStorage, sobrevive a
+  // recarregar a página e a trocar de questão e voltar). O limite de
+  // mensagens da sessão continua controlado à parte (sessionStorage +
+  // servidor) — isso aqui é só o HISTÓRICO de texto, não afeta a cota.
+  function loadAllHistories() {
+    try {
+      const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveAllHistories(all) {
+    try {
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(all));
+    } catch {
+      // localStorage cheio ou indisponível (ex: modo privado) — ignora
+      // silenciosamente, a conversa só não persiste desta vez.
+    }
+  }
+
+  function loadHistoryForQuestion(questionId) {
+    const all = loadAllHistories();
+    return all[questionId]?.messages || [];
+  }
+
+  function saveHistoryForQuestion(questionId, history) {
+    const all = loadAllHistories();
+
+    if (history.length === 0) {
+      delete all[questionId];
+    } else {
+      all[questionId] = { messages: history, updatedAt: Date.now() };
+    }
+
+    // Chaves numéricas em objetos JS são reordenadas pelo motor (ordem
+    // crescente), não pela ordem de inserção — por isso guardamos updatedAt
+    // e ordenamos por ele na hora de decidir o que descartar, em vez de
+    // confiar na ordem das chaves.
+    const entries = Object.entries(all);
+    if (entries.length > MAX_STORED_CONVERSATIONS) {
+      entries.sort((a, b) => a[1].updatedAt - b[1].updatedAt);
+      const excess = entries.length - MAX_STORED_CONVERSATIONS;
+      for (let i = 0; i < excess; i += 1) delete all[entries[i][0]];
+    }
+
+    saveAllHistories(all);
   }
 
   function cacheDom() {
@@ -193,12 +245,23 @@ const Pepito = (() => {
   function resetChat(question) {
     typingToken += 1;
     state.question = question;
-    state.history = [];
     el.messages.innerHTML = "";
-    appendMessage(
-      "system",
-      `Sou o Pepito! Nova questão carregada (${disciplineLabel(question)} · ${question.year}). Pergunte o que quiser sobre ela.`,
-    );
+
+    const savedHistory = question.id != null ? loadHistoryForQuestion(question.id) : [];
+
+    if (savedHistory.length > 0) {
+      // Já tem conversa guardada pra essa questão: restaura as bolhas exatas
+      // em vez de mostrar de novo a intro de "nova questão" (não é nova).
+      state.history = savedHistory;
+      savedHistory.forEach((msg) => appendMessage(msg.role, msg.content));
+    } else {
+      state.history = [];
+      appendMessage(
+        "system",
+        `Sou o Pepito! Nova questão carregada (${disciplineLabel(question)} · ${question.year}). Pergunte o que quiser sobre ela.`,
+      );
+    }
+
     updateInputAvailability();
   }
 
@@ -279,6 +342,7 @@ const Pepito = (() => {
 
       const cleaned = sanitizeAssistantText(body.reply);
       state.history.push({ role: "assistant", content: cleaned });
+      if (state.question.id != null) saveHistoryForQuestion(state.question.id, state.history);
 
       typingBubble.classList.remove("chat-typing");
       await typeMessage(typingBubble, cleaned);
