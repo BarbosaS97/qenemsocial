@@ -2,18 +2,25 @@
 // Escuta o evento "qenemsocial:question" (disparado por app.js) para saber
 // qual questão está em tela e usar como contexto do chat.
 //
-// A folha do chat (chat-sheet) ocupa o rodapé inteiro e tem altura livre,
-// controlada pelo usuário arrastando a lapela (chat-tab) entre 0 (só a
-// lapela visível) e quase o topo da tela.
+// O cabeçalho (chat-header) e o corpo (chat-body, mensagens + formulário)
+// ficam colados um no outro, de ponta a ponta da tela: fechado, só o
+// cabeçalho aparece, cravado no rodapé; ao clicar, o corpo cresce pra 60% da
+// tela por baixo do cabeçalho, e o cabeçalho — com avatar e nome — sobe
+// junto, sempre no topo do painel. O cabeçalho é a alça de arrastar/clicar:
+// arrastar pra cima/baixo ajusta essa altura livremente até quase o topo.
 
 const Pepito = (() => {
   const SESSION_KEY = "qenemsocial_chat_session";
   const HISTORY_STORAGE_KEY = "qenemsocial_chat_history";
   const MAX_STORED_CONVERSATIONS = 50;
-  const TRANSITION = "height 0.32s cubic-bezier(0.22, 1, 0.36, 1), bottom 0.32s cubic-bezier(0.22, 1, 0.36, 1)";
-  const TOP_MARGIN = 16;
+  const HEADER_HEIGHT = 64; // tem que bater com .chat-header no CSS
+  const EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+  const BODY_TRANSITION = `height 0.32s ${EASING}`;
+  // Mesma duração/curva do corpo, mas em "bottom" — é o que faz o cabeçalho
+  // (avatar + nome) subir junto, em sincronia, quando o chat abre.
+  const HEADER_TRANSITION = `bottom 0.32s ${EASING}`;
+  const TOP_MARGIN = 16; // folga mínima entre o topo do chat aberto e o topo da tela
   const DEFAULT_OPEN_RATIO = 0.6;
-  const DEFAULT_OPEN_MAX = 640;
   const TYPING_DELAY_MIN = 25;
   const TYPING_DELAY_RANGE = 35;
   const REQUEST_TIMEOUT_MS = 30000;
@@ -91,9 +98,10 @@ const Pepito = (() => {
   }
 
   function cacheDom() {
-    el.sheet = document.getElementById("chat-sheet");
-    el.tab = document.getElementById("chat-tab");
+    el.body = document.getElementById("chat-body");
+    el.header = document.getElementById("chat-header");
     el.toggleIcon = document.getElementById("chat-toggle-icon");
+    el.avatarImg = el.header ? el.header.querySelector(".chat-avatar") : null;
     el.messages = document.getElementById("chat-messages");
     el.form = document.getElementById("chat-form");
     el.input = document.getElementById("chat-input");
@@ -102,27 +110,33 @@ const Pepito = (() => {
   }
 
   function getMaxHeight() {
-    return window.innerHeight - TOP_MARGIN;
+    return window.innerHeight - TOP_MARGIN - HEADER_HEIGHT;
   }
 
   function getDefaultOpenHeight() {
-    return Math.min(window.innerHeight * DEFAULT_OPEN_RATIO, DEFAULT_OPEN_MAX);
+    return Math.min(window.innerHeight * DEFAULT_OPEN_RATIO, getMaxHeight());
   }
 
-  // Altura livre: a folha e a lapela são sincronizadas pelo mesmo valor,
-  // então a lapela sempre acompanha a borda superior da folha.
+  // O corpo (mensagens) cresce por baixo do cabeçalho, que fica sempre
+  // colado nele por cima — então o cabeçalho (com avatar e nome) sobe junto,
+  // em sincronia, conforme o corpo cresce. "bottom" do cabeçalho == altura
+  // do corpo: fechado (altura 0) ele fica cravado no rodapé; aberto, sobe.
   function setHeight(px, animate) {
     const clamped = Math.min(Math.max(px, 0), getMaxHeight());
-    const transition = animate ? TRANSITION : "none";
-    el.sheet.style.transition = transition;
-    el.tab.style.transition = transition;
-    el.sheet.style.height = `${clamped}px`;
-    el.tab.style.bottom = `${clamped}px`;
+    el.body.style.transition = animate ? BODY_TRANSITION : "none";
+    el.body.style.height = `${clamped}px`;
+    el.header.style.transition = animate ? HEADER_TRANSITION : "none";
+    el.header.style.bottom = `${clamped}px`;
     state.height = clamped;
 
     const isOpen = clamped > 0;
-    el.tab.setAttribute("aria-expanded", String(isOpen));
-    el.toggleIcon.textContent = isOpen ? "⌄" : "⌃";
+    el.header.setAttribute("aria-expanded", String(isOpen));
+    el.header.classList.toggle("is-open", isOpen);
+    // Uma seta só ("▶") que gira, em vez de trocar de caractere: fechado
+    // aponta pra cima, aberto aponta pra baixo.
+    el.toggleIcon.style.transform = isOpen ? "rotate(90deg)" : "rotate(-90deg)";
+    // Pose de saudação quando fechado, pose "explicando" durante a conversa.
+    if (el.avatarImg) el.avatarImg.src = isOpen ? "images/avatar2.png" : "images/avatar.png";
   }
 
   function setupDrag() {
@@ -132,15 +146,15 @@ const Pepito = (() => {
     let startHeight = 0;
     let suppressClick = false;
 
-    el.tab.addEventListener("pointerdown", (e) => {
+    el.header.addEventListener("pointerdown", (e) => {
       dragging = true;
       moved = false;
       startY = e.clientY;
       startHeight = state.height;
-      el.tab.setPointerCapture(e.pointerId);
+      el.header.setPointerCapture(e.pointerId);
     });
 
-    el.tab.addEventListener("pointermove", (e) => {
+    el.header.addEventListener("pointermove", (e) => {
       if (!dragging) return;
       const delta = startY - e.clientY; // arrastar para cima aumenta a altura
       if (Math.abs(delta) > 4) moved = true;
@@ -156,10 +170,10 @@ const Pepito = (() => {
       }
     }
 
-    el.tab.addEventListener("pointerup", endDrag);
-    el.tab.addEventListener("pointercancel", endDrag);
+    el.header.addEventListener("pointerup", endDrag);
+    el.header.addEventListener("pointercancel", endDrag);
 
-    el.tab.addEventListener("click", () => {
+    el.header.addEventListener("click", () => {
       if (suppressClick) {
         suppressClick = false;
         return;
@@ -211,6 +225,27 @@ const Pepito = (() => {
     el.messages.appendChild(bubble);
     scrollMessagesToBottom();
     return bubble;
+  }
+
+  // Indicador "Pepito está digitando": avatar pulsando + bolinhas saltando,
+  // no lugar do antigo texto estático em itálico. hideTypingIndicator troca
+  // pro visual de bolha normal, e typeMessage() preenche o texto por cima.
+  function showTypingIndicator() {
+    const bubble = document.createElement("div");
+    bubble.className = "chat-message role-assistant typing-indicator";
+    bubble.innerHTML =
+      '<img src="images/avatar2.png" alt="" class="typing-avatar" aria-hidden="true">' +
+      '<span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+    bubble.setAttribute("aria-label", "Pepito está digitando");
+    el.messages.appendChild(bubble);
+    scrollMessagesToBottom();
+    return bubble;
+  }
+
+  function hideTypingIndicator(bubble) {
+    bubble.classList.remove("typing-indicator");
+    bubble.removeAttribute("aria-label");
+    bubble.innerHTML = "";
   }
 
   // Efeito de digitação: revela a resposta palavra por palavra, com uma
@@ -301,8 +336,7 @@ const Pepito = (() => {
     appendMessage("user", text);
     state.history.push({ role: "user", content: text });
 
-    const typingBubble = appendMessage("assistant", "Pepito está digitando...");
-    typingBubble.classList.add("chat-typing");
+    const typingBubble = showTypingIndicator();
 
     // Timeout explícito: sem isso, se a DeepSeek ou a Edge Function travarem,
     // o chat fica preso em "digitando..." pra sempre, sem nenhuma saída a não
@@ -344,7 +378,7 @@ const Pepito = (() => {
       state.history.push({ role: "assistant", content: cleaned });
       if (state.question.id != null) saveHistoryForQuestion(state.question.id, state.history);
 
-      typingBubble.classList.remove("chat-typing");
+      hideTypingIndicator(typingBubble);
       await typeMessage(typingBubble, cleaned);
 
       if (body.usage) {

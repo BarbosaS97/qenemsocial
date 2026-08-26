@@ -49,9 +49,10 @@ body {
   line-height: 1.6;
 }
 
-/* Só a página de estudo (com o chat do Pepito) precisa dessa folga no rodapé. */
+/* Só a página de estudo (com o chat do Pepito) precisa dessa folga no rodapé
+   -- tem que bater com a altura fixa de .chat-header (64px). */
 body.has-chat {
-  padding-bottom: 56px;
+  padding-bottom: 64px;
 }
 
 h1,
@@ -578,9 +579,155 @@ main.container {
   }
 }
 
-/* Chat flutuante (bottom sheet) - Pepito */
-/* A folha ocupa o rodapé inteiro; a altura é controlada via JS (arraste livre). */
-.chat-sheet {
+/* Chat flutuante - Pepito */
+/* Cabeçalho de ponta a ponta da tela, com "bottom" controlado por JS: fechado
+   (bottom:0) ele é a própria barra do rodapé; aberto, "bottom" sobe junto com
+   a altura do chat-body (que fica colado nele, por baixo), carregando avatar
+   e nome pro topo do painel — e é a alça de arrastar/clicar que ajusta essa
+   altura. */
+.chat-header {
+  all: unset;
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px;
+  background: var(--color-surface);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -6px 16px rgba(50, 16, 128, 0.16);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.chat-header:active {
+  cursor: grabbing;
+}
+
+.chat-header-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.chat-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Fechado, o avatar sobe e "escapa" por cima da borda do cabeçalho (efeito
+   de balão flutuando sobre a aba); aberto, ele volta a se alinhar com o
+   resto da linha. A transição fica na wrap (não na img sozinha) pra
+   arrastar a bolinha de status junto, sem descolar uma da outra. */
+.chat-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  transform: translateY(-18px);
+  transition: transform 0.25s ease;
+}
+
+.chat-header.is-open .chat-avatar-wrap {
+  transform: translateY(0);
+}
+
+/* Grande quando fechado (é o que identifica o Pepito de cara, sem precisar
+   abrir nada); encolhe quando o chat abre — aí ele é só um rótulo de
+   cabeçalho, o protagonismo passa a ser a conversa. */
+.chat-avatar {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(50, 16, 128, 0.2);
+  border: 3px solid var(--color-surface);
+  transition: width 0.25s ease, height 0.25s ease, border-width 0.25s ease;
+}
+
+.chat-header.is-open .chat-avatar {
+  width: 30px;
+  height: 30px;
+  border-width: 0;
+}
+
+/* Bolinha de status (ex: online) sobreposta no canto do avatar — convenção
+   já bem estabelecida em apps de chat, dispensa rótulo de texto extra. */
+.chat-indicator {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2.5px solid var(--color-surface);
+  transition: width 0.25s ease, height 0.25s ease;
+}
+
+.chat-header.is-open .chat-indicator {
+  width: 10px;
+  height: 10px;
+}
+
+.chat-indicator.online {
+  background: var(--color-success);
+}
+
+.chat-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.chat-usage {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Seta única que gira em vez de trocar de caractere (⌃/⌄) — fechado aponta
+   pra cima ("puxe"), aberto aponta pra baixo ("recolher"). */
+.chat-arrow {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+  transform: rotate(-90deg);
+  transition: transform 0.25s ease;
+}
+
+/* Mensagens + formulário: sempre colado no rodapé da tela (bottom: 0), o
+   cabeçalho fica logo acima dele — cresce pra cima, nunca aparece sozinho
+   sem o cabeçalho. Sem cantos arredondados: a costura de cima encosta no
+   cabeçalho (que já é arredondado ali) e a de baixo encosta na borda da tela. */
+.chat-body {
   position: fixed;
   left: 0;
   right: 0;
@@ -589,86 +736,10 @@ main.container {
   width: 100%;
   height: 0;
   background: var(--color-surface);
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  box-shadow: 0 -8px 28px rgba(50, 16, 128, 0.16);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   will-change: height;
-}
-
-/* A lapela é o único elemento visível quando o chat está no rodapé:
-   um pequeno "flap" central que acompanha a borda superior da folha. */
-.chat-tab {
-  all: unset;
-  box-sizing: border-box;
-  position: fixed;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  z-index: 41;
-  width: 84px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-surface);
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 -6px 16px rgba(50, 16, 128, 0.16);
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  will-change: bottom;
-}
-
-.chat-tab:active {
-  cursor: grabbing;
-}
-
-/* Linha ondulada (curvas suaves) que serve de alça de arrasto */
-.chat-wave {
-  position: absolute;
-  top: 9px;
-  left: 12px;
-  right: 12px;
-  height: 8px;
-  background-color: var(--color-border);
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='12' viewBox='0 0 40 12'%3E%3Cpath d='M0,6 Q10,0 20,6 T40,6' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='12' viewBox='0 0 40 12'%3E%3Cpath d='M0,6 Q10,0 20,6 T40,6' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
-  -webkit-mask-repeat: repeat-x;
-  mask-repeat: repeat-x;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: 32px 10px;
-  mask-size: 32px 10px;
-}
-
-.chat-toggle-icon {
-  position: relative;
-  margin-top: 10px;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  line-height: 1;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.chat-title {
-  font-weight: 700;
-}
-
-.chat-usage {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
 }
 
 .chat-messages {
@@ -690,6 +761,7 @@ main.container {
   font-size: 0.95rem;
   line-height: 1.5;
   white-space: pre-wrap;
+  animation: fadeIn 0.25s ease;
 }
 
 .chat-message.role-user {
@@ -716,9 +788,80 @@ main.container {
   max-width: 100%;
 }
 
-.chat-typing {
-  color: var(--color-text-muted);
-  font-style: italic;
+/* Indicador "Pepito está digitando" — avatar pulsando + 3 bolinhas saltando,
+   no lugar do antigo texto estático em itálico. */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.typing-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.typing-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chat-form {
